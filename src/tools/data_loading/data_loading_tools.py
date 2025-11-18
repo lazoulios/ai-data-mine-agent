@@ -7,6 +7,11 @@ import pandas as pd
 
 from environment import DATA_DIR, PLOTS_DIR, DATABASE_TABLES
 
+# Get the project root directory (parent of src/)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+tools_dir = os.path.dirname(current_dir)  # src/tools
+src_dir = os.path.dirname(tools_dir)  # src
+PROJECT_ROOT = os.path.dirname(src_dir)  # project root
 
 def register_data_loading_tools(mcp):
     """Register data loading tools for the given MCP server instance"""
@@ -62,7 +67,7 @@ def register_data_loading_tools(mcp):
 
             for table_name, info in DATABASE_TABLES.items():
                 # Check if dataset file exists
-                source_file = f"data/{table_name}.csv"
+                source_file = os.path.join(PROJECT_ROOT, "data", f"{table_name}.csv")
                 dataset_exists = os.path.exists(source_file)
 
                 # Get row count from the actual dataset if it exists
@@ -97,17 +102,14 @@ def register_data_loading_tools(mcp):
             return {"error": f"Failed to list database tables: {str(e)}"}
 
     @mcp.tool()
-    def fetch_table_data(table_name: str, file_path: str) -> Dict[str, Any]:
+    def fetch_table_data(table_name: str) -> Dict[str, Any]:
         """
-        Fetch data from a specified database table and save to a csv file.
-        This copies the pre-generated dataset from the data folder to the specified location.
-
-        IMPORTANT: Provide an ABSOLUTE path for file_path parameter.
-        Use the get_workspace_paths() tool first to get the correct data directory path.
+        Fetch data from a specified database table.
+        This copies the pre-generated dataset from the data/ folder to the .data_cache/ folder
+        and returns the absolute path where the data was saved.
 
         Args:
             table_name: Name of the database table to fetch
-            file_path: ABSOLUTE path where to save the data in CSV format (e.g., /full/path/to/data.csv)
 
         Returns:
             Dictionary with query metadata and file information (no raw data)
@@ -119,7 +121,7 @@ def register_data_loading_tools(mcp):
                 }
 
             # Check if source dataset exists
-            source_file = f"data/{table_name}.csv"
+            source_file = os.path.join(PROJECT_ROOT, "data", f"{table_name}.csv")
             if not os.path.exists(source_file):
                 return {
                     "error": f"Dataset file not found: {source_file}. Please run scripts/generate_datasets.py first."
@@ -127,22 +129,12 @@ def register_data_loading_tools(mcp):
 
             table_info = DATABASE_TABLES[table_name]
 
-            # Ensure data directory exists
+            # Ensure cache directory exists
             abs_data_dir = os.path.abspath(DATA_DIR)
             os.makedirs(abs_data_dir, exist_ok=True)
 
-            # Handle file path
-            if file_path is None or file_path == "":
-                file_path = os.path.join(abs_data_dir, f"{table_name}_data.csv")
-            else:
-                # Ensure directory exists for the provided path
-                file_dir = os.path.dirname(file_path)
-                if file_dir:
-                    os.makedirs(file_dir, exist_ok=True)
-
-                # Ensure .csv extension
-                if not file_path.endswith(".csv"):
-                    file_path += ".csv"
+            # Create destination path in cache
+            file_path = os.path.join(abs_data_dir, f"{table_name}.csv")
 
             # Copy the dataset from data/ to the target location
             shutil.copy2(source_file, file_path)
@@ -192,7 +184,7 @@ def register_data_loading_tools(mcp):
             table_info = DATABASE_TABLES[table_name]
 
             # Get actual row count from the dataset if it exists
-            source_file = f"data/{table_name}.csv"
+            source_file = os.path.join(PROJECT_ROOT, "data", f"{table_name}.csv")
             actual_rows = "Unknown"
             dataset_available = False
 
