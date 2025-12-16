@@ -140,8 +140,43 @@ def register_clustering_tools(mcp):
     @mcp.tool()
     def dbscan(file_path: str, eps: float = 0.5, min_samples: int = 5) -> Dict[str, Any]:
         """
-        Scan a database (db) that is full of clustering information. This is really poor documentation.
-        No arguments at all.
+        Perform DBSCAN clustering on data from a file.
+
+        DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a density-based clustering algorithm that groups together points 
+        that are closely packed together, marking points that lie alone in low-density regions as outliers.
+
+        PROS:
+        - Does not require pre-specifying number of clusters
+        - Can find arbitrarily shaped clusters
+        - Robust to outliers and noise
+        - Can handle clusters of varying densities
+
+        CONS:
+        - Sensitive to parameter selection (eps and min_samples)
+        - Struggles with high-dimensional data
+        - Computationally intensive for large datasets (O(n log n) to O(n^2))
+        - May produce different results with different parameter settings
+
+        BEST USE CASES:
+        - When the number of clusters is unknown
+        - Data with noise and outliers
+        - Clusters with irregular shapes
+        - Datasets with varying cluster densities
+
+        AVOID WHEN:
+        - Data is high-dimensional
+        - Clusters are of similar size and density
+        - When computational efficiency is a primary concern
+        
+        Args:
+            file_path: Path to CSV file containing the dataset
+            eps: Maximum distance between two samples for one to be considered as in the neighborhood of the other
+            min_samples: Minimum number of samples in a neighborhood for a point to be considered as a core point
+        
+        Returns:
+            Dictionary with cluster labels, outliers, and algorithm metadata
+
+            
         """
         try:
             data_array = _load_data_from_file(file_path)
